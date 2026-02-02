@@ -1,0 +1,839 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Pinkes Eichhörnchen</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    body { margin: 0; padding: 16px; background: #0b0d10; color: #e9eef5; }
+    .card { background: #12161c; border: 1px solid #1e2631; border-radius: 16px; padding: 14px; margin: 12px 0; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .title { font-size: 18px; font-weight: 800; margin: 0 0 6px 0; }
+    .muted { color: #aab6c5; font-size: 13px; }
+    .pill { display:inline-block; padding: 4px 10px; border-radius: 999px; border:1px solid #243041; background:#0f1319; font-size: 12px; }
+    .good { border-color:#2bff9b55; }
+    .bad { border-color:#ff4d4d66; }
+    .stat { display:flex; flex-direction:column; gap:2px; min-width: 120px; }
+    .stat b { font-size: 18px; }
+    button { border: 0; border-radius: 14px; padding: 12px 14px; font-weight: 750; cursor: pointer; }
+    .btnPrimary { background: #2b90ff; color:#07121f; }
+    .btnDanger { background: #ff4d4d; color:#210707; }
+    .btnGhost { background: #1a2230; color:#dbe7f5; border:1px solid #243041; }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+
+    .barWrap { width: 220px; height: 10px; border-radius: 999px; border:1px solid #243041; background:#0f1319; overflow:hidden; }
+    .bar { height: 100%; width: 0%; background: #2b90ff; }
+    .small { font-size: 12px; }
+
+    .petBox {
+      display:flex; align-items:center; justify-content:center;
+      width: 170px; height: 170px; border-radius: 18px;
+      border:1px solid #243041; background:#0f1319;
+      position: relative;
+    }
+    .petLabel {
+      position:absolute; bottom:10px; left:10px;
+      font-size: 12px; padding: 4px 10px; border-radius: 999px;
+      border:1px solid #243041; background:#0b0d10cc;
+    }
+
+    input, select, textarea {
+      width: 100%; box-sizing: border-box;
+      border-radius: 14px; border:1px solid #243041; background:#0f1319; color:#e9eef5;
+      padding: 10px 12px; outline: none;
+    }
+    textarea { min-height: 64px; resize: vertical; }
+    .log { font-size: 13px; line-height: 1.35; }
+    .grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+    @media (max-width: 420px){ .grid{ grid-template-columns: 1fr; } }
+
+    .quest { border:1px solid #243041; background:#0f1319; border-radius:14px; padding:10px; }
+    .questTop { display:flex; align-items:center; justify-content: space-between; gap:10px; }
+    .questTitle { font-weight:750; }
+    .questReward { font-size:12px; color:#aab6c5; }
+
+    .twoCol { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 520px){ .twoCol{ grid-template-columns: 1fr; } }
+
+    .hr { height:1px; background:#1e2631; margin: 12px 0; }
+    .tagRow { display:flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .tagBtn { padding: 8px 10px; border-radius: 999px; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="row" style="justify-content: space-between;">
+      <div>
+        <div class="title">🐿️ Pinkes Eichhörnchen</div>
+        <div class="muted">Süß & positiv – mit strenger Konsequenz (48h krank + Level runter).</div>
+      </div>
+      <button class="btnGhost" id="resetBtn" title="Setzt alles zurück">Reset</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div class="petBox">
+        <div id="petSvg"></div>
+        <div class="petLabel" id="stagePill">Baby</div>
+      </div>
+
+      <div style="flex:1; min-width: 240px;">
+        <div class="row" style="justify-content: space-between;">
+          <div>
+            <div class="title" id="petNameTitle">Rosie</div>
+            <div class="muted" id="petMoodText">Ich fühl mich sicher bei dir.</div>
+          </div>
+          <div class="pill" id="statusPill">Healthy</div>
+        </div>
+
+        <div style="height:10px"></div>
+
+        <div class="row">
+          <div class="stat">
+            <span class="muted">Streak</span>
+            <b id="streak">0</b>
+          </div>
+          <div class="stat">
+            <span class="muted">Level</span>
+            <b id="level">0</b>
+          </div>
+          <div class="stat" style="min-width: 180px;">
+            <span class="muted">XP</span>
+            <div class="row" style="align-items:center; gap:10px;">
+              <div class="barWrap"><div class="bar" id="xpBar"></div></div>
+              <span class="small" id="xpText">0/50</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="height:10px"></div>
+
+        <div class="row">
+          <div class="stat">
+            <span class="muted">Hunger</span>
+            <b id="hunger">100</b>
+          </div>
+          <div class="stat">
+            <span class="muted">Happiness</span>
+            <b id="happy">100</b>
+          </div>
+          <div class="stat">
+            <span class="muted">Bond</span>
+            <b id="bond">0</b>
+          </div>
+        </div>
+
+        <div style="height:10px"></div>
+        <div class="muted" id="sickTimer"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="questCard">
+    <div class="title">Tages-Quests</div>
+    <div class="muted">3 kleine Aufgaben, die dich über die Welle tragen. Jede Quest ist 1× pro Tag.</div>
+    <div style="height:10px"></div>
+    <div id="quests"></div>
+    <div class="muted" id="questInfo" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="card">
+    <div class="title">Pflege</div>
+    <div class="muted">Jede Aktion ist 1× pro Tag verfügbar.</div>
+    <div style="height:10px"></div>
+
+    <div class="grid">
+      <button class="btnGhost" id="feedBtn">🍓 Füttern</button>
+      <button class="btnGhost" id="playBtn">🎾 Spielen</button>
+      <button class="btnGhost" id="cuddleBtn">🤗 Kuscheln</button>
+      <button class="btnPrimary" id="cleanBtn">✅ Clean-Tag</button>
+    </div>
+
+    <div style="height:10px"></div>
+    <button class="btnDanger" id="relapseBtn" style="width:100%;">⚠️ Rückfall</button>
+
+    <div style="height:10px"></div>
+    <label class="muted">Kurze Notiz (optional)</label>
+    <textarea id="note" placeholder="Was war heute schwer? Was hat geholfen?"></textarea>
+
+    <div class="muted" id="todayInfo" style="margin-top:10px;"></div>
+  </div>
+
+  <!-- NEW: SOS + Tagebuch -->
+  <div class="card">
+    <div class="title">SOS & Drang-Tagebuch</div>
+    <div class="muted">Für den Moment, wo der Drang hochschießt: kurz festhalten, dann eine Mini-Aktion wählen.</div>
+
+    <div class="hr"></div>
+
+    <div class="twoCol">
+      <div>
+        <label class="muted">Drang-Intensität (0–10)</label>
+        <input id="urge" type="range" min="0" max="10" step="1" value="0" />
+        <div class="row" style="justify-content: space-between;">
+          <span class="muted">0</span>
+          <span class="pill" id="urgePill">0</span>
+          <span class="muted">10</span>
+        </div>
+
+        <div style="height:10px"></div>
+
+        <label class="muted">Gefühl</label>
+        <select id="feeling">
+          <option value="">(optional)</option>
+          <option>Stress</option>
+          <option>Angst</option>
+          <option>Scham</option>
+          <option>Wut</option>
+          <option>Leere</option>
+          <option>Traurigkeit</option>
+          <option>Überforderung</option>
+          <option>Perfektionismus</option>
+        </select>
+
+        <div style="height:10px"></div>
+
+        <label class="muted">Trigger / Auslöser</label>
+        <input id="trigger" placeholder="z. B. Streit, Social Media, allein, nach dem Essen…" />
+
+        <div class="tagRow">
+          <button class="btnGhost tagBtn" data-tag="allein">allein</button>
+          <button class="btnGhost tagBtn" data-tag="stress">stress</button>
+          <button class="btnGhost tagBtn" data-tag="konflikt">konflikt</button>
+          <button class="btnGhost tagBtn" data-tag="social media">social media</button>
+          <button class="btnGhost tagBtn" data-tag="nach dem essen">nach dem essen</button>
+        </div>
+      </div>
+
+      <div>
+        <label class="muted">Was mache ich stattdessen? (Plan)</label>
+        <textarea id="plan" placeholder="z. B. 10 Min rausgehen + Wasser + Quest + Musik"></textarea>
+
+        <div style="height:10px"></div>
+
+        <label class="muted">Was hat geholfen? (0–10)</label>
+        <input id="helped" type="range" min="0" max="10" step="1" value="0" />
+        <div class="row" style="justify-content: space-between;">
+          <span class="muted">0</span>
+          <span class="pill" id="helpedPill">0</span>
+          <span class="muted">10</span>
+        </div>
+
+        <div style="height:10px"></div>
+
+        <div class="grid">
+          <button class="btnGhost" id="breatheBtn">🫁 2 Min Atmen</button>
+          <button class="btnGhost" id="delayBtn">⏳ 10 Min Delay</button>
+        </div>
+
+        <div style="height:10px"></div>
+        <button class="btnPrimary" id="saveJournalBtn" style="width:100%;">📝 Eintrag speichern</button>
+
+        <div class="muted" id="sosText" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="title" style="font-size:16px;">Letzte Drang-Einträge</div>
+    <div class="muted">Optional: Eintrag löschen, wenn’s dir lieber ist.</div>
+    <div style="height:10px"></div>
+    <div id="journalList" class="log"></div>
+  </div>
+
+  <div class="card">
+    <div class="title">Verlauf</div>
+    <div class="muted">Alles bleibt lokal auf deinem Gerät gespeichert.</div>
+    <div style="height:10px"></div>
+    <div class="log" id="log"></div>
+  </div>
+
+<script>
+(() => {
+  const STORAGE_KEY = "pink_squirrel_v3_journal";
+
+  const SICK_HOURS = 48;
+
+  const levelGoals = [50, 80, 120, 170, 230, 300];
+  const CLEAN_XP = 12;
+
+  const FEED_HUNGER = 25;
+  const FEED_HAPPY = 6;
+
+  const PLAY_HAPPY = 18;
+  const PLAY_XP = 4;
+
+  const CUDDLE_BOND = 3;
+  const CUDDLE_HAPPY = 8;
+
+  const DAILY_HUNGER_DECAY = 18;
+  const DAILY_HAPPY_DECAY = 12;
+
+  // Quests
+  const QUESTS_PER_DAY = 3;
+  const QUEST_POOL = [
+    { id:"breathe2",  title:"2 Minuten atmen (Box Breathing)", desc:"4s ein – 4s halten – 4s aus – 4s halten.", reward:{ happy:+10, bond:+1 }, log:"Quest: Atmen 🫁" },
+    { id:"water",     title:"Ein großes Glas Wasser", desc:"Einfach, aber erstaunlich wirksam.", reward:{ hunger:+8, happy:+4 }, log:"Quest: Wasser 💧" },
+    { id:"walk10",    title:"10 Minuten spazieren", desc:"Nur raus, egal wie langsam.", reward:{ happy:+14, xp:+4 }, log:"Quest: Spaziergang 🚶" },
+    { id:"tidy5",     title:"5 Minuten aufräumen", desc:"Eine Mini-Ecke reicht.", reward:{ bond:+2, xp:+3 }, log:"Quest: Aufräumen 🧹" },
+    { id:"journal3",  title:"3 Sätze Journaling", desc:"Was fühl ich? Was brauch ich? Nächster kleiner Schritt?", reward:{ bond:+2, happy:+8 }, log:"Quest: Journaling ✍️" },
+    { id:"miniwork",  title:"Mini-Workout", desc:"10 Kniebeugen oder 10 Liegestütze (oder leicht).", reward:{ xp:+5, happy:+6 }, log:"Quest: Workout 💪" },
+    { id:"textfriend",title:"Kurze Nachricht an jemanden", desc:"Ein Emoji reicht. Verbindung hilft.", reward:{ happy:+10, bond:+2 }, log:"Quest: Verbindung 💬" },
+    { id:"cold",      title:"30 Sekunden kaltes Wasser", desc:"Hände/ Gesicht kurz kalt abspülen.", reward:{ happy:+8, xp:+3 }, log:"Quest: Reset ❄️" },
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  const now = () => Date.now();
+
+  function startOfDay(ts) {
+    const d = new Date(ts);
+    d.setHours(0,0,0,0);
+    return d.getTime();
+  }
+
+  function fmtDate(ts) {
+    const d = new Date(ts);
+    return d.toLocaleString("de-DE", { year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit" });
+  }
+
+  function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+
+  function levelGoal(level) {
+    return levelGoals[level] ?? (350 + (level * 80));
+  }
+
+  function isSick(s) {
+    return s.sickUntil && now() < s.sickUntil;
+  }
+
+  function canDoActionToday(s, key) {
+    return s.actionDay[key] !== startOfDay(now());
+  }
+
+  function markAction(s, key) {
+    s.actionDay[key] = startOfDay(now());
+  }
+
+  function applyDailyDecayIfNeeded(s) {
+    const today = startOfDay(now());
+    if (s.lastDecayDay === today) return;
+
+    const days = clamp(Math.floor((today - (s.lastDecayDay || today)) / (24*60*60*1000)), 0, 7);
+    if (days <= 0) { s.lastDecayDay = today; return; }
+
+    s.hunger = clamp(s.hunger - DAILY_HUNGER_DECAY * days, 0, 100);
+    s.happy  = clamp(s.happy  - DAILY_HAPPY_DECAY  * days, 0, 100);
+    s.lastDecayDay = today;
+  }
+
+  function clampXPAndLevelUp(s) {
+    while (s.xp >= levelGoal(s.level)) {
+      s.xp -= levelGoal(s.level);
+      s.level += 1;
+      addLog(s, "levelup", "Level up! 🎉");
+    }
+    if (s.xp < 0) s.xp = 0;
+  }
+
+  function stageForLevel(level) {
+    if (level >= 8) return "Legend";
+    if (level >= 5) return "Adult";
+    if (level >= 2) return "Teen";
+    return "Baby";
+  }
+
+  function moodText(s) {
+    const sick = isSick(s);
+    if (sick) return "Ich bin krank… bleib bitte bei mir. 💗";
+    if (s.hunger < 25) return "Mein Bauch knurrt… vielleicht ein Snack? 🥺";
+    if (s.happy < 25)  return "Ich fühl mich etwas leer… spielen? 🎾";
+    if (s.streak >= 7) return "Wir sind stark. Ich glaub an uns. ✨";
+    return "Ich fühl mich sicher bei dir. 💕";
+  }
+
+  function squirrelSVG({ state, stage }) {
+    const blush = state === "sick" ? "#ff7aa8" : "#ff9ac2";
+    const body  = state === "sick" ? "#ff6fa8" : "#ff7fba";
+    const dark  = state === "sick" ? "#c73a6e" : "#c23b7a";
+    const eye   = state === "sick" ? "#6b7686" : "#0b0d10";
+    const sparkle = stage === "Legend";
+
+    const scale = stage === "Baby" ? 0.92 : stage === "Teen" ? 1.0 : stage === "Adult" ? 1.06 : 1.10;
+    const crown = stage === "Legend" ? `
+      <path d="M90 20l8 10 10-8 6 12 12-6-4 14H70l-4-14 12 6 6-12 10 8z" fill="#ffd46b" stroke="#a8842a" stroke-width="2"/>
+    ` : "";
+
+    const bandage = state === "sick" ? `<rect x="46" y="42" width="30" height="10" rx="5" fill="#f2f5ff" opacity="0.95"/><circle cx="52" cy="47" r="1.8" fill="#d1d7e6"/><circle cx="58" cy="47" r="1.8" fill="#d1d7e6"/><circle cx="64" cy="47" r="1.8" fill="#d1d7e6"/><circle cx="70" cy="47" r="1.8" fill="#d1d7e6"/>` : "";
+
+    const spark = sparkle ? `
+      <path d="M26 28l4 10 10 4-10 4-4 10-4-10-10-4 10-4z" fill="#a8f6ff" opacity="0.9"/>
+      <path d="M132 46l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#a8f6ff" opacity="0.8"/>
+    ` : "";
+
+    const mouth = state === "sick"
+      ? `<path d="M74 82q-10 8-20 0" stroke="${dark}" stroke-width="4" fill="none" stroke-linecap="round"/>`
+      : `<path d="M54 78q10 12 20 0" stroke="${dark}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+
+    const eyes = state === "sick"
+      ? `<circle cx="58" cy="62" r="5" fill="${eye}" opacity="0.65"/><circle cx="92" cy="62" r="5" fill="${eye}" opacity="0.65"/>`
+      : `<circle cx="58" cy="62" r="6" fill="${eye}"/><circle cx="92" cy="62" r="6" fill="${eye}"/>`;
+
+    return `
+      <svg width="150" height="150" viewBox="0 0 160 160" style="transform: scale(${scale});">
+        ${spark}
+        ${crown}
+        <path d="M120 92c22-10 18-44-4-56-18-10-32 2-30 16 2 16 18 14 20 26 2 10-10 14-18 16 10 10 22 8 32-2z"
+          fill="${body}" stroke="${dark}" stroke-width="3" stroke-linejoin="round"/>
+        <ellipse cx="72" cy="96" rx="34" ry="38" fill="${body}" stroke="${dark}" stroke-width="3"/>
+        <ellipse cx="72" cy="110" rx="18" ry="22" fill="${blush}" opacity="0.85"/>
+        <circle cx="74" cy="62" r="30" fill="${body}" stroke="${dark}" stroke-width="3"/>
+        <path d="M54 38c-10-8-18 6-10 16 6 8 16 4 16-4 0-4-2-8-6-12z" fill="${body}" stroke="${dark}" stroke-width="3"/>
+        <path d="M96 38c10-8 18 6 10 16-6 8-16 4-16-4 0-4 2-8 6-12z" fill="${body}" stroke="${dark}" stroke-width="3"/>
+        ${bandage}
+        ${eyes}
+        <circle cx="76" cy="70" r="4" fill="${dark}"/>
+        ${mouth}
+        <circle cx="48" cy="72" r="7" fill="${blush}" opacity="0.6"/>
+        <circle cx="102" cy="72" r="7" fill="${blush}" opacity="0.6"/>
+        <path d="M44 98c-10 8-10 22 2 26" stroke="${dark}" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <path d="M98 98c10 8 10 22-2 26" stroke="${dark}" stroke-width="6" fill="none" stroke-linecap="round"/>
+      </svg>
+    `;
+  }
+
+  function addLog(s, type, note) {
+    s.log.unshift({ ts: now(), type, note: (note || "").trim() });
+    s.log = s.log.slice(0, 120);
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, (c) => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
+    }[c]));
+  }
+
+  // --- Quests ---
+  function rngInt(seed, max) {
+    let x = (seed * 1664525 + 1013904223) >>> 0;
+    return x % max;
+  }
+  function dailySeed() {
+    return Math.floor(startOfDay(now()) / (24*60*60*1000));
+  }
+  function generateDailyQuests(s) {
+    const today = startOfDay(now());
+    if (s.questDay === today && s.dailyQuests?.length) return;
+
+    const seed = dailySeed();
+    const chosen = [];
+    let attempts = 0;
+
+    while (chosen.length < QUESTS_PER_DAY && attempts < 200) {
+      attempts++;
+      const idx = rngInt(seed + attempts * 97, QUEST_POOL.length);
+      const q = QUEST_POOL[idx];
+      if (!chosen.find(x => x.id === q.id)) chosen.push(q);
+    }
+
+    s.questDay = today;
+    s.dailyQuests = chosen.map(q => ({ ...q, done: false }));
+  }
+  function completeQuest(s, questId) {
+    const q = s.dailyQuests.find(x => x.id === questId);
+    if (!q || q.done) return;
+
+    if (q.reward.xp) s.xp += q.reward.xp;
+    if (q.reward.happy) s.happy = clamp(s.happy + q.reward.happy, 0, 100);
+    if (q.reward.hunger) s.hunger = clamp(s.hunger + q.reward.hunger, 0, 100);
+    if (q.reward.bond) s.bond += q.reward.bond;
+
+    q.done = true;
+    addLog(s, "quest", q.log);
+    clampXPAndLevelUp(s);
+  }
+  function renderQuests(s) {
+    const host = $("quests");
+    if (!s.dailyQuests?.length) {
+      host.innerHTML = `<div class="muted">Keine Quests geladen.</div>`;
+      return;
+    }
+
+    host.innerHTML = s.dailyQuests.map(q => {
+      const rewardParts = [];
+      if (q.reward.xp) rewardParts.push(`+${q.reward.xp} XP`);
+      if (q.reward.happy) rewardParts.push(`+${q.reward.happy} 😊`);
+      if (q.reward.hunger) rewardParts.push(`+${q.reward.hunger} 🍽️`);
+      if (q.reward.bond) rewardParts.push(`+${q.reward.bond} 🤝`);
+
+      return `
+        <div class="quest">
+          <div class="questTop">
+            <div>
+              <div class="questTitle">${q.title}</div>
+              <div class="muted">${q.desc}</div>
+              <div class="questReward">Belohnung: ${rewardParts.join(" · ")}</div>
+            </div>
+            <button class="${q.done ? "btnGhost" : "btnPrimary"}" data-quest="${q.id}" ${q.done ? "disabled" : ""}>
+              ${q.done ? "✅" : "Fertig"}
+            </button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    const doneCount = s.dailyQuests.filter(q => q.done).length;
+    $("questInfo").textContent = doneCount === QUESTS_PER_DAY
+      ? "Alle Quests geschafft. Stark. ✨"
+      : `${doneCount}/${QUESTS_PER_DAY} Quests erledigt.`;
+
+    host.querySelectorAll("button[data-quest]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        completeQuest(state, btn.getAttribute("data-quest"));
+        saveState(state);
+        render(state);
+      });
+    });
+  }
+
+  // --- Journal / SOS ---
+  function renderSliders() {
+    $("urgePill").textContent = $("urge").value;
+    $("helpedPill").textContent = $("helped").value;
+  }
+
+  function saveJournalEntry(s) {
+    const urge = Number($("urge").value);
+    const helped = Number($("helped").value);
+    const feeling = $("feeling").value.trim();
+    const trigger = $("trigger").value.trim();
+    const plan = $("plan").value.trim();
+
+    const entry = {
+      id: String(now()) + "_" + Math.random().toString(16).slice(2),
+      ts: now(),
+      urge,
+      helped,
+      feeling,
+      trigger,
+      plan
+    };
+
+    s.journal.unshift(entry);
+    s.journal = s.journal.slice(0, 60);
+
+    // Kleiner Bonus für "stattdessen handeln" (unterstützend, aber nicht overpowered)
+    if (plan) {
+      s.bond += 1;
+      s.happy = clamp(s.happy + 4, 0, 100);
+      s.xp += 2;
+      clampXPAndLevelUp(s);
+    }
+
+    addLog(s, "journal", "Drang-Eintrag gespeichert 📝");
+
+    // Felder teilweise leeren (Drang darf bleiben, falls du mehrere Wellen trackst)
+    $("trigger").value = "";
+    $("plan").value = "";
+    $("helped").value = "0";
+    $("feeling").value = "";
+    renderSliders();
+  }
+
+  function deleteJournalEntry(s, id) {
+    s.journal = s.journal.filter(e => e.id !== id);
+  }
+
+  function renderJournal(s) {
+    const host = $("journalList");
+    if (!s.journal.length) {
+      host.innerHTML = `<div class="muted">Noch keine Drang-Einträge. Wenn es schwer wird: 10 Sekunden reichen.</div>`;
+      return;
+    }
+
+    host.innerHTML = s.journal.map(e => {
+      const t = fmtDate(e.ts);
+      const trig = e.trigger ? `<div class="muted">Trigger: ${escapeHtml(e.trigger)}</div>` : "";
+      const feel = e.feeling ? `<div class="muted">Gefühl: ${escapeHtml(e.feeling)}</div>` : "";
+      const plan = e.plan ? `<div class="muted">Plan: ${escapeHtml(e.plan)}</div>` : "";
+      return `
+        <div class="card" style="margin:10px 0; padding:10px;">
+          <div class="row" style="justify-content: space-between;">
+            <span class="pill ${e.urge >= 7 ? "bad" : "good"}">Drang ${e.urge}/10</span>
+            <span class="muted">${t}</span>
+          </div>
+          <div class="muted">Hat geholfen: ${e.helped}/10</div>
+          ${feel}${trig}${plan}
+          <div style="height:8px"></div>
+          <button class="btnGhost" data-del="${e.id}">Eintrag löschen</button>
+        </div>
+      `;
+    }).join("");
+
+    host.querySelectorAll("button[data-del]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        deleteJournalEntry(state, btn.getAttribute("data-del"));
+        saveState(state);
+        render(state);
+      });
+    });
+  }
+
+  function startBreathing() {
+    // simple 2-min guided text
+    const steps = [
+      "Einatmen… 4",
+      "Halten… 4",
+      "Ausatmen… 4",
+      "Halten… 4"
+    ];
+    let i = 0, cycles = 0;
+    $("sosText").textContent = "Start: Wir machen 2 Minuten Box Breathing.";
+    const timer = setInterval(() => {
+      $("sosText").textContent = steps[i];
+      i = (i + 1) % steps.length;
+      if (i === 0) cycles++;
+      if (cycles >= 8) { // 8 cycles * ~8s = ~64s; but each step shown 2s -> adjust below
+        // We'll end after 120s in parallel
+      }
+    }, 2000);
+
+    setTimeout(() => {
+      clearInterval(timer);
+      $("sosText").textContent = "Gut. Nur dieser Moment zählt. Wähle jetzt eine Quest oder schreib 1 Satz in den Plan.";
+    }, 120000);
+  }
+
+  function startDelay10() {
+    const end = now() + 10 * 60 * 1000;
+    $("sosText").textContent = "Okay. Wir schieben nur 10 Minuten. Du musst jetzt nichts entscheiden.";
+    const t = setInterval(() => {
+      const ms = Math.max(0, end - now());
+      const m = Math.floor(ms / 60000);
+      const s = Math.floor((ms % 60000) / 1000);
+      $("sosText").textContent = `⏳ Delay läuft: ${m}:${String(s).padStart(2,"0")} — in der Zeit: Wasser / kurz raus / Quest.`;
+      if (ms <= 0) {
+        clearInterval(t);
+        $("sosText").textContent = "10 Minuten geschafft. Check-in: Wie stark ist der Drang jetzt (0–10)?";
+      }
+    }, 1000);
+  }
+
+  // --- State ---
+  function loadState() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) { try { return JSON.parse(raw); } catch {} }
+    return {
+      level: 0, xp: 0, streak: 0,
+      hunger: 100, happy: 100, bond: 0,
+      sickUntil: 0,
+      lastDecayDay: startOfDay(now()),
+      actionDay: { clean: 0, relapse: 0, feed: 0, play: 0, cuddle: 0 },
+      questDay: 0,
+      dailyQuests: [],
+      journal: [],
+      log: []
+    };
+  }
+
+  function saveState(s) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+  }
+
+  // Actions
+  function doClean(s, note) {
+    if (!canDoActionToday(s, "clean")) return;
+    const carePenalty = (s.hunger < 30 || s.happy < 30) ? 0.75 : 1.0;
+
+    s.streak += 1;
+    s.xp += Math.round(CLEAN_XP * carePenalty);
+    s.bond += 1;
+    s.happy = clamp(s.happy + 6, 0, 100);
+
+    addLog(s, "clean", note);
+    markAction(s, "clean");
+    clampXPAndLevelUp(s);
+  }
+
+  function doRelapse(s, note) {
+    if (!canDoActionToday(s, "relapse")) return;
+
+    s.streak = 0;
+    s.level = Math.max(0, s.level - 1);
+    s.xp = Math.min(s.xp, Math.floor(levelGoal(s.level) * 0.2));
+    s.sickUntil = now() + SICK_HOURS * 60 * 60 * 1000;
+    s.happy = clamp(s.happy - 20, 0, 100);
+
+    addLog(s, "relapse", note);
+    markAction(s, "relapse");
+  }
+
+  function doFeed(s) {
+    if (!canDoActionToday(s, "feed")) return;
+    s.hunger = clamp(s.hunger + FEED_HUNGER, 0, 100);
+    s.happy  = clamp(s.happy + FEED_HAPPY, 0, 100);
+    addLog(s, "feed", "Du hast gefüttert. 🍓");
+    markAction(s, "feed");
+  }
+
+  function doPlay(s) {
+    if (!canDoActionToday(s, "play")) return;
+    s.happy = clamp(s.happy + PLAY_HAPPY, 0, 100);
+    s.xp += PLAY_XP;
+    addLog(s, "play", "Ihr habt gespielt. 🎾");
+    markAction(s, "play");
+    clampXPAndLevelUp(s);
+  }
+
+  function doCuddle(s) {
+    if (!canDoActionToday(s, "cuddle")) return;
+    s.bond += CUDDLE_BOND;
+    s.happy = clamp(s.happy + CUDDLE_HAPPY, 0, 100);
+    addLog(s, "cuddle", "Kuscheln hilft. 🤗");
+    markAction(s, "cuddle");
+  }
+
+  function render(s) {
+    applyDailyDecayIfNeeded(s);
+    generateDailyQuests(s);
+
+    const sawSick = isSick(s);
+    $("statusPill").textContent = sawSick ? "Sick" : "Healthy";
+    $("statusPill").className = "pill " + (sawSick ? "bad" : "good");
+
+    const stage = stageForLevel(s.level);
+    $("stagePill").textContent = stage;
+
+    if (sawSick) {
+      const ms = Math.max(0, s.sickUntil - now());
+      const h = Math.floor(ms / (1000*60*60));
+      const m = Math.floor((ms % (1000*60*60)) / (1000*60));
+      $("sickTimer").textContent = `⏳ Krank für noch ca. ${h}h ${m}m (48h-Strenge).`;
+    } else {
+      $("sickTimer").textContent = "🌿 Gesund. Heute zählt – Schritt für Schritt.";
+    }
+
+    $("petMoodText").textContent = moodText(s);
+    $("petSvg").innerHTML = squirrelSVG({ state: sawSick ? "sick" : "healthy", stage });
+
+    $("streak").textContent = String(s.streak);
+    $("level").textContent = String(s.level);
+    $("hunger").textContent = String(s.hunger);
+    $("happy").textContent  = String(s.happy);
+    $("bond").textContent   = String(s.bond);
+
+    const goal = levelGoal(s.level);
+    const pct = clamp((s.xp / goal) * 100, 0, 100);
+    $("xpBar").style.width = pct + "%";
+    $("xpText").textContent = `${s.xp}/${goal}`;
+
+    $("cleanBtn").disabled   = !canDoActionToday(s, "clean");
+    $("relapseBtn").disabled = !canDoActionToday(s, "relapse");
+    $("feedBtn").disabled    = !canDoActionToday(s, "feed");
+    $("playBtn").disabled    = !canDoActionToday(s, "play");
+    $("cuddleBtn").disabled  = !canDoActionToday(s, "cuddle");
+
+    const remaining = [];
+    for (const k of ["feed","play","cuddle","clean","relapse"]) if (canDoActionToday(s, k)) remaining.push(k);
+    $("todayInfo").textContent = remaining.length
+      ? "Heute möglich: " + remaining.map(k => ({
+          feed:"Füttern", play:"Spielen", cuddle:"Kuscheln", clean:"Clean-Tag", relapse:"Rückfall"
+        }[k])).join(", ") + "."
+      : "Für heute ist alles eingetragen. Morgen geht’s weiter.";
+
+    renderQuests(s);
+    renderJournal(s);
+    renderSliders();
+
+    // Log
+    const map = {
+      clean:   ["✅ Clean", "good"],
+      relapse: ["⚠️ Rückfall", "bad"],
+      feed:    ["🍓 Füttern", "good"],
+      play:    ["🎾 Spielen", "good"],
+      cuddle:  ["🤗 Kuscheln", "good"],
+      quest:   ["🗺️ Quest", "good"],
+      journal: ["📝 Tagebuch", "good"],
+      levelup: ["✨ Level-Up", "good"]
+    };
+    if (!s.log.length) {
+      $("log").innerHTML = `<div class="muted">Noch keine Einträge. Fang mit „Clean-Tag“ an.</div>`;
+    } else {
+      $("log").innerHTML = s.log.map(e => {
+        const [label, cls] = map[e.type] || ["•", "good"];
+        const note = e.note ? `<div class="muted" style="margin-top:4px;">${escapeHtml(e.note)}</div>` : "";
+        return `<div class="card" style="margin:10px 0; padding:10px;">
+          <div class="row" style="justify-content: space-between;">
+            <span class="pill ${cls}">${label}</span>
+            <span class="muted">${fmtDate(e.ts)}</span>
+          </div>
+          ${note}
+        </div>`;
+      }).join("");
+    }
+  }
+
+  // Wire up
+  let state = loadState();
+
+  // quick tag buttons for trigger
+  document.querySelectorAll("button[data-tag]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const tag = btn.getAttribute("data-tag");
+      const cur = $("trigger").value.trim();
+      $("trigger").value = cur ? (cur + ", " + tag) : tag;
+    });
+  });
+
+  $("urge").addEventListener("input", renderSliders);
+  $("helped").addEventListener("input", renderSliders);
+
+  $("breatheBtn").addEventListener("click", startBreathing);
+  $("delayBtn").addEventListener("click", startDelay10);
+
+  $("saveJournalBtn").addEventListener("click", () => {
+    saveJournalEntry(state);
+    saveState(state);
+    render(state);
+    $("sosText").textContent = "Eintrag gespeichert. Wenn du magst: wähle jetzt eine Quest (kleiner nächster Schritt).";
+  });
+
+  $("feedBtn").addEventListener("click", () => { doFeed(state); saveState(state); render(state); });
+  $("playBtn").addEventListener("click", () => { doPlay(state); saveState(state); render(state); });
+  $("cuddleBtn").addEventListener("click", () => { doCuddle(state); saveState(state); render(state); });
+
+  $("cleanBtn").addEventListener("click", () => {
+    const note = $("note").value;
+    doClean(state, note);
+    $("note").value = "";
+    saveState(state);
+    render(state);
+  });
+
+  $("relapseBtn").addEventListener("click", () => {
+    const note = $("note").value;
+    doRelapse(state, note);
+    $("note").value = "";
+    saveState(state);
+    render(state);
+  });
+
+  $("resetBtn").addEventListener("click", () => {
+    if (!confirm("Alles wirklich zurücksetzen?")) return;
+    localStorage.removeItem(STORAGE_KEY);
+    state = loadState();
+    saveState(state);
+    render(state);
+  });
+
+  setInterval(() => render(state), 20 * 1000);
+
+  render(state);
+})();
+</script>
+</body>
+</html>
